@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Dark mode variant for class-based switching */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -19,8 +22,348 @@
   }
 }
 
+/* Override CSS variables when using class-based dark mode */
+html.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --color-background: #0a0a0a;
+  --color-foreground: #ededed;
+}
+
+/* Defensive: ensure :root with dark class also updates vars */
+:root.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Ensure body colors switch in class-based dark mode even if CSS vars fail to cascade */
+.dark body {
+  background: #0a0a0a !important;
+  color: #ededed !important;
+}
+
+/* Base text color helpers for containers that rely on inherit */
+.dark .text-gray-100 { color: #f5f5f5; }
+.dark .text-gray-200 { color: #e5e7eb; }
+.dark .text-gray-300 { color: #d1d5db; }
+.dark .text-gray-400 { color: #9ca3af; }
+.dark .text-gray-500 { color: #6b7280; }
+
+/* Force readable text in dark mode for main containers and prose */
+.dark .min-h-screen { color: #ededed !important; }
+.dark article.prose { color: #ededed !important; }
+
+/* Syntax Highlighting Styles with highlight.js */
+pre {
+  overflow-x: auto;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin: 1.5rem 0;
+  line-height: 1.6;
+  font-size: 0.875rem;
+  background-color: #f6f8fa !important;
+}
+
+.dark pre {
+  background-color: #0d1117 !important;
+}
+
+pre code {
+  display: block;
+  font-family: var(--font-mono), 'Courier New', monospace;
+  background: transparent !important;
+}
+
+/* Inline code */
+code:not(pre code) {
+  background-color: rgba(175, 184, 193, 0.2);
+  padding: 0.2em 0.4em;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+  font-family: var(--font-mono), 'Courier New', monospace;
+}
+
+.dark code:not(pre code) {
+  background-color: rgba(110, 118, 129, 0.4);
+  color: #e5e7eb;
+}
+
+/* highlight.js theme colors */
+.hljs {
+  color: #24292e;
+}
+
+.dark .hljs {
+  color: #c9d1d9;
+}
+
+.hljs-comment,
+.hljs-quote {
+  color: #6a737d;
+}
+
+.dark .hljs-comment,
+.dark .hljs-quote {
+  color: #8b949e;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-subst {
+  color: #d73a49;
+}
+
+.dark .hljs-keyword,
+.dark .hljs-selector-tag,
+.dark .hljs-subst {
+  color: #ff7b72;
+}
+
+.hljs-number,
+.hljs-literal,
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag .hljs-attr {
+  color: #005cc5;
+}
+
+.dark .hljs-number,
+.dark .hljs-literal,
+.dark .hljs-variable,
+.dark .hljs-template-variable,
+.dark .hljs-tag .hljs-attr {
+  color: #79c0ff;
+}
+
+.hljs-string,
+.hljs-doctag {
+  color: #032f62;
+}
+
+.dark .hljs-string,
+.dark .hljs-doctag {
+  color: #a5d6ff;
+}
+
+.hljs-title,
+.hljs-section,
+.hljs-selector-id {
+  color: #6f42c1;
+  font-weight: bold;
+}
+
+.dark .hljs-title,
+.dark .hljs-section,
+.dark .hljs-selector-id {
+  color: #d2a8ff;
+  font-weight: bold;
+}
+
+.hljs-type,
+.hljs-class .hljs-title {
+  color: #005cc5;
+}
+
+.dark .hljs-type,
+.dark .hljs-class .hljs-title {
+  color: #79c0ff;
+}
+
+.hljs-tag,
+.hljs-name,
+.hljs-attribute {
+  color: #22863a;
+}
+
+.dark .hljs-tag,
+.dark .hljs-name,
+.dark .hljs-attribute {
+  color: #7ee787;
+}
+
+.hljs-regexp,
+.hljs-link {
+  color: #032f62;
+}
+
+.dark .hljs-regexp,
+.dark .hljs-link {
+  color: #a5d6ff;
+}
+
+.hljs-symbol,
+.hljs-bullet {
+  color: #e36209;
+}
+
+.dark .hljs-symbol,
+.dark .hljs-bullet {
+  color: #ffa657;
+}
+
+.hljs-built_in,
+.hljs-builtin-name {
+  color: #005cc5;
+}
+
+.dark .hljs-built_in,
+.dark .hljs-builtin-name {
+  color: #79c0ff;
+}
+
+.hljs-meta {
+  color: #6a737d;
+}
+
+.dark .hljs-meta {
+  color: #8b949e;
+}
+
+.hljs-deletion {
+  background: #ffeef0;
+}
+
+.dark .hljs-deletion {
+  background: #ffdce0;
+}
+
+.hljs-addition {
+  background: #e6ffed;
+}
+
+.dark .hljs-addition {
+  background: #aff5b4;
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: bold;
+}
+
+/* Typography and Prose Styles */
+.prose {
+  max-width: 65ch;
+  color: inherit;
+}
+/* Ensure text flips to light color in dark mode */
+.dark .prose { color: #ededed; }
+
+.prose h1 {
+  font-size: 2.25rem;
+  font-weight: 700;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  line-height: 1.2;
+  color: inherit;
+}
+.dark .prose h1 { color: #ededed; }
+
+.prose h2 {
+  font-size: 1.875rem;
+  font-weight: 600;
+  margin-top: 1.75rem;
+  margin-bottom: 0.875rem;
+  line-height: 1.3;
+  color: inherit;
+}
+.dark .prose h2 { color: #ededed; }
+
+.prose h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.4;
+  color: inherit;
+}
+.dark .prose h3 { color: #ededed; }
+
+.prose p {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  line-height: 1.7;
+}
+
+.prose ul,
+.prose ol {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+}
+
+.prose li {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  line-height: 1.7;
+}
+
+.prose a {
+  color: #3b82f6;
+  text-decoration: underline;
+}
+
+.prose a:hover {
+  color: #2563eb;
+}
+
+.dark .prose a {
+  color: #60a5fa;
+}
+
+.dark .prose a:hover {
+  color: #93c5fd;
+}
+
+.prose blockquote {
+  border-left: 4px solid #e5e7eb;
+  padding-left: 1rem;
+  font-style: italic;
+  margin: 1.5rem 0;
+  color: #6b7280;
+}
+
+.dark .prose blockquote {
+  border-left-color: #374151;
+  color: #9ca3af;
+}
+
+.prose strong {
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+}
+
+.prose th,
+.prose td {
+  border: 1px solid #e5e7eb;
+  padding: 0.75rem;
+  text-align: left;
+}
+
+.dark .prose th,
+.dark .prose td {
+  border-color: #374151;
+}
+
+.prose th {
+  background-color: #f9fafb;
+  font-weight: 600;
+}
+
+.dark .prose th {
+  background-color: #1f2937;
 }
