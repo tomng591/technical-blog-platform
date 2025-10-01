@@ -57,6 +57,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
       }
 
       return (
+        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={src as string}
           alt={alt}
