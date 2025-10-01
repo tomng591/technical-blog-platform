@@ -145,14 +145,53 @@ npm start
 ### Available Scripts
 
 ```bash
-npm run dev          # Start development server with hot reload
-npm run build        # Build for production
-npm start            # Start production server
-npm run lint         # Run ESLint
-npm run docker:build # Build Docker image
-npm run docker:run   # Run Docker container
+npm run dev            # Start development server with hot reload
+npm run build          # Build for production
+npm start              # Start production server
+npm run lint           # Run ESLint
+npm run type-check     # Run TypeScript type checking
+npm run pre-deploy     # Run all pre-deployment checks (recommended before deploying!)
+npm run docker:build   # Build Docker image
+npm run docker:run     # Run Docker container
 npm run docker:compose # Run with Docker Compose
 ```
+
+### Pre-Deployment Checklist
+
+**IMPORTANT**: This project includes automatic pre-deployment validation!
+
+#### Automatic Git Hook (Recommended)
+
+A Git pre-push hook is automatically set up when you run `npm install`. This hook runs all validation checks before every push:
+
+```bash
+# Hooks are set up automatically, but you can manually configure them:
+npm run postinstall
+```
+
+The hook will prevent you from pushing code that would fail to build on your droplet.
+
+To bypass the hook in emergencies (not recommended):
+```bash
+git push --no-verify
+```
+
+#### Manual Pre-Deployment Check
+
+You can also run checks manually before deploying:
+
+```bash
+npm run pre-deploy
+```
+
+This script will:
+- ✅ Install dependencies
+- ✅ Run linting checks
+- ✅ Verify TypeScript types
+- ✅ Test production build
+- ✅ Validate Docker build (if Docker is available)
+
+If all checks pass, you're safe to deploy. This prevents build failures on your droplet!
 
 ### Project Structure
 
@@ -211,7 +250,195 @@ docker run -p 3000:3000 \
   technical-blog:latest
 ```
 
-## ☸️ Kubernetes Deployment (DigitalOcean)
+## 🌊 DigitalOcean Droplet Deployment
+
+### Prerequisites
+
+1. DigitalOcean account
+2. A Droplet (Ubuntu 22.04 or later recommended)
+3. Domain name pointed to your Droplet's IP address
+4. SSH access to your Droplet
+
+### Step 1: Initial Server Setup
+
+SSH into your Droplet and install Docker:
+
+```bash
+# Update packages
+sudo apt update && sudo apt upgrade -y
+
+# Install Docker
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+
+# Add your user to docker group (optional)
+sudo usermod -aG docker $USER
+newgrp docker
+
+# Install Docker Compose
+sudo apt install docker-compose -y
+```
+
+### Step 2: Clone and Build
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/technical-blog-platform.git
+cd technical-blog-platform
+
+# Create environment file
+nano .env.production
+
+# Add your configuration:
+NEXT_PUBLIC_BASE_URL=https://yourdomain.com
+NEXT_PUBLIC_TWITTER_HANDLE=@yourhandle
+
+# Build the Docker image
+docker build -t technical-blog:latest .
+```
+
+### Step 3: Run the Container
+
+```bash
+# Run the container
+docker run -d \
+  --name technical-blog \
+  --restart unless-stopped \
+  -p 3000:3000 \
+  --env-file .env.production \
+  technical-blog:latest
+
+# Check logs
+docker logs technical-blog -f
+
+# Verify it's running
+curl http://localhost:3000/api/health
+```
+
+### Step 4: Set Up Nginx (Recommended)
+
+Install and configure Nginx as a reverse proxy:
+
+```bash
+# Install Nginx
+sudo apt install nginx -y
+
+# Create Nginx configuration
+sudo nano /etc/nginx/sites-available/technical-blog
+
+# Add the following configuration:
+server {
+    listen 80;
+    server_name yourdomain.com www.yourdomain.com;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+# Enable the site
+sudo ln -s /etc/nginx/sites-available/technical-blog /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl restart nginx
+```
+
+### Step 5: Set Up SSL with Certbot
+
+```bash
+# Install Certbot
+sudo apt install certbot python3-certbot-nginx -y
+
+# Obtain SSL certificate
+sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
+
+# Certbot will automatically configure HTTPS and set up auto-renewal
+# Verify auto-renewal
+sudo certbot renew --dry-run
+```
+
+### Updating the Application
+
+```bash
+# Pull latest changes
+cd technical-blog-platform
+git pull origin main
+
+# Rebuild the image
+docker build -t technical-blog:latest .
+
+# Stop and remove old container
+docker stop technical-blog
+docker rm technical-blog
+
+# Start new container
+docker run -d \
+  --name technical-blog \
+  --restart unless-stopped \
+  -p 3000:3000 \
+  --env-file .env.production \
+  technical-blog:latest
+
+# Verify the update
+docker logs technical-blog -f
+```
+
+### Monitoring and Maintenance
+
+```bash
+# View logs
+docker logs technical-blog --tail=100 -f
+
+# Check container status
+docker ps
+
+# Restart container
+docker restart technical-blog
+
+# Check resource usage
+docker stats technical-blog
+
+# Check health endpoint
+curl https://yourdomain.com/api/health
+```
+
+### Backup Strategy
+
+```bash
+# Create backup script
+nano ~/backup-blog.sh
+
+# Add the following:
+#!/bin/bash
+DATE=$(date +%Y%m%d_%H%M%S)
+BACKUP_DIR=~/backups
+mkdir -p $BACKUP_DIR
+
+# Backup application code
+tar -czf $BACKUP_DIR/blog-code-$DATE.tar.gz ~/technical-blog-platform
+
+# Backup Docker image
+docker save technical-blog:latest | gzip > $BACKUP_DIR/blog-image-$DATE.tar.gz
+
+# Keep only last 7 days of backups
+find $BACKUP_DIR -name "blog-*" -mtime +7 -delete
+
+# Make executable
+chmod +x ~/backup-blog.sh
+
+# Add to crontab for daily backups at 2 AM
+crontab -e
+# Add: 0 2 * * * ~/backup-blog.sh
+```
+
+## ☸️ Kubernetes Deployment (Optional - For Advanced Users)
 
 ### Prerequisites
 

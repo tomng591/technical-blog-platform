@@ -7,9 +7,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "type-check": "tsc --noEmit",
+    "pre-deploy": "bash scripts/pre-deploy.sh",
     "docker:build": "docker build -t technical-blog:latest .",
     "docker:run": "docker run -p 3000:3000 technical-blog:latest",
-    "docker:compose": "docker-compose up --build"
+    "docker:compose": "docker-compose up --build",
+    "postinstall": "bash scripts/setup-hooks.sh"
   },
   "dependencies": {
     "@mdx-js/loader": "^3.1.1",

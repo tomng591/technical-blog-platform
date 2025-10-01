@@ -1,0 +1,26 @@
+#!/bin/bash
+
+# Git pre-push hook to run pre-deployment checks
+# This ensures you don't push code that will fail to build on the server
+
+echo ""
+echo "🔒 Running pre-push checks..."
+echo ""
+
+# Run pre-deployment checks
+npm run pre-deploy
+
+# If checks fail, prevent the push
+if [ $? -ne 0 ]; then
+    echo ""
+    echo "❌ Pre-push checks failed!"
+    echo "🚫 Push aborted. Fix the errors above before pushing."
+    echo ""
+    exit 1
+fi
+
+echo ""
+echo "✅ Pre-push checks passed! Proceeding with push..."
+echo ""
+
+exit 0

@@ -37,28 +37,32 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
       )
     },
     img: (props) => {
-      const { alt = '', ...rest } = props as ImageProps & { width?: number; height?: number }
-      const hasExplicitSize = typeof (rest as any).width === 'number' && typeof (rest as any).height === 'number'
+      const { alt = '', src, width, height, ...rest } = props as ImageProps & { width?: number; height?: number }
+      const hasExplicitSize = typeof width === 'number' && typeof height === 'number'
 
       // If width/height are provided, use Next/Image for optimization.
       // Otherwise, fall back to native <img> to avoid runtime errors.
-      if (hasExplicitSize) {
+      if (hasExplicitSize && src) {
         return (
           <Image
+            src={src}
+            width={width}
+            height={height}
+            alt={alt}
             sizes="100vw"
             style={{ width: '100%', height: 'auto' }}
-            alt={alt}
-            {...(rest as ImageProps)}
+            {...rest}
           />
         )
       }
 
       return (
         <img
+          src={src as string}
           alt={alt}
           style={{ width: '100%', height: 'auto', display: 'block' }}
           loading="lazy"
-          {...(rest as unknown as React.ImgHTMLAttributes<HTMLImageElement>)}
+          {...(rest as React.ImgHTMLAttributes<HTMLImageElement>)}
         />
       )
     },
