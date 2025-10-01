@@ -210,13 +210,20 @@ If all checks pass, you're safe to deploy. This prevents build failures on your 
 │   └── theme-toggle.tsx     # Theme switcher
 ├── content/
 │   └── content_*.mdx        # Blog post content
+├── docs/
+│   └── nginx-setup.md       # Alternative Nginx setup guide
 ├── lib/
 │   └── metadata.ts          # SEO utilities
+├── scripts/
+│   ├── pre-deploy.sh        # Pre-deployment validation
+│   └── setup-hooks.sh       # Git hooks setup
 ├── k8s/
 │   ├── deployment.yaml      # Kubernetes manifests
 │   └── README.md            # K8s deployment guide
+├── Caddyfile                # Caddy reverse proxy config
 ├── Dockerfile               # Multi-stage Docker build
-└── docker-compose.yml       # Local Docker setup
+├── docker-compose.yml       # Local Docker setup
+└── DEPLOYMENT.md            # Deployment quick reference
 ```
 
 ## 🐳 Docker Deployment
@@ -315,54 +322,44 @@ docker logs technical-blog -f
 curl http://localhost:3000/api/health
 ```
 
-### Step 4: Set Up Nginx (Recommended)
+### Step 4: Set Up Caddy (Recommended)
 
-Install and configure Nginx as a reverse proxy:
-
-```bash
-# Install Nginx
-sudo apt install nginx -y
-
-# Create Nginx configuration
-sudo nano /etc/nginx/sites-available/technical-blog
-
-# Add the following configuration:
-server {
-    listen 80;
-    server_name yourdomain.com www.yourdomain.com;
-
-    location / {
-        proxy_pass http://localhost:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-
-# Enable the site
-sudo ln -s /etc/nginx/sites-available/technical-blog /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl restart nginx
-```
-
-### Step 5: Set Up SSL with Certbot
+Caddy is a modern web server with automatic HTTPS. It's simpler than Nginx + Certbot.
 
 ```bash
-# Install Certbot
-sudo apt install certbot python3-certbot-nginx -y
+# Install Caddy
+sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https curl
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
+sudo apt update
+sudo apt install caddy
 
-# Obtain SSL certificate
-sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
+# Copy your Caddyfile (from the repo)
+sudo cp ~/technical-blog-platform/Caddyfile /etc/caddy/Caddyfile
 
-# Certbot will automatically configure HTTPS and set up auto-renewal
-# Verify auto-renewal
-sudo certbot renew --dry-run
+# Edit the Caddyfile to use your domain
+sudo nano /etc/caddy/Caddyfile
+# Replace 'yourdomain.com' with your actual domain
+
+# Reload Caddy
+sudo systemctl reload caddy
+
+# Check Caddy status
+sudo systemctl status caddy
 ```
+
+**That's it!** Caddy will automatically:
+- Obtain SSL certificates from Let's Encrypt
+- Set up HTTPS redirects
+- Auto-renew certificates before they expire
+- Handle gzip compression
+- Add security headers
+
+No need for Certbot or manual certificate management!
+
+#### Alternative: Using Nginx + Certbot
+
+If you prefer Nginx, see the [Nginx setup guide](docs/nginx-setup.md) (coming soon).
 
 ### Updating the Application
 
@@ -393,7 +390,7 @@ docker logs technical-blog -f
 ### Monitoring and Maintenance
 
 ```bash
-# View logs
+# View application logs
 docker logs technical-blog --tail=100 -f
 
 # Check container status
@@ -407,6 +404,12 @@ docker stats technical-blog
 
 # Check health endpoint
 curl https://yourdomain.com/api/health
+
+# Caddy-specific commands
+sudo systemctl status caddy        # Check Caddy status
+sudo systemctl reload caddy        # Reload Caddy config
+sudo journalctl -u caddy -f        # View Caddy logs
+caddy validate --config /etc/caddy/Caddyfile  # Validate config
 ```
 
 ### Backup Strategy

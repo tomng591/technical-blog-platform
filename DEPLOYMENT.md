@@ -90,18 +90,32 @@ docker inspect technical-blog
 sudo netstat -tulpn | grep 3000
 ```
 
-#### SSL issues
+#### SSL/HTTPS issues (Caddy)
 
 ```bash
-# Test SSL certificate renewal
-sudo certbot renew --dry-run
+# Check Caddy status
+sudo systemctl status caddy
 
-# Check Nginx config
-sudo nginx -t
+# View Caddy logs
+sudo journalctl -u caddy -n 100
 
-# Reload Nginx
-sudo systemctl reload nginx
+# Validate Caddyfile
+caddy validate --config /etc/caddy/Caddyfile
+
+# Reload Caddy (if config changed)
+sudo systemctl reload caddy
+
+# Restart Caddy (if needed)
+sudo systemctl restart caddy
+
+# Check if port 80/443 are available
+sudo netstat -tulpn | grep -E ':(80|443)'
 ```
+
+**Note**: Caddy handles SSL certificates automatically. If certificates aren't working:
+1. Ensure your domain's DNS A record points to your droplet's IP
+2. Check that ports 80 and 443 are open in your firewall
+3. Wait a few minutes for DNS propagation
 
 ## Rollback Procedure
 
@@ -152,8 +166,11 @@ gunzip -c blog-image-YYYYMMDD_HHMMSS.tar.gz | docker load
 
 After each deployment:
 
-- [ ] Check logs: `docker logs technical-blog --tail=50`
+- [ ] Check app logs: `docker logs technical-blog --tail=50`
+- [ ] Check Caddy status: `sudo systemctl status caddy`
 - [ ] Test health endpoint: `curl https://yourdomain.com/api/health`
 - [ ] Verify homepage loads: Open browser to your domain
-- [ ] Check SSL certificate: Browser should show secure connection
+- [ ] Check SSL certificate: Browser should show secure connection (padlock icon)
+- [ ] Verify HTTPS redirect: `curl -I http://yourdomain.com` should redirect to HTTPS
+- [ ] Check Caddy logs: `sudo journalctl -u caddy -n 20`
 - [ ] Monitor for 5-10 minutes to ensure stability
