@@ -19,6 +19,29 @@ export default function Home() {
           <h2>Recent Posts</h2>
           <div className="not-prose">
             <Link
+              href="/blog/deploy-docker-with-ai"
+              className="block p-6 mb-4 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            >
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                From Zero to Deployed: How I Learned Docker in an Hour with AI
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-3">
+                A practical guide on deploying a Next.js blog to DigitalOcean using Docker, learning DevOps concepts from scratch with AI assistance. From $50/month AWS costs to a $6/month solution.
+              </p>
+              <div className="flex gap-2">
+                <span className="text-xs px-2 py-1 rounded bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
+                  docker
+                </span>
+                <span className="text-xs px-2 py-1 rounded bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
+                  deployment
+                </span>
+                <span className="text-xs px-2 py-1 rounded bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
+                  ai
+                </span>
+              </div>
+            </Link>
+
+            <Link
               href="/blog/getting-started"
               className="block p-6 mb-4 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
             >

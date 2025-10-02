@@ -1,0 +1,181 @@
+# From Zero to Deployed: How I Learned Docker in an Hour with AI
+
+## The $50/Month Problem
+
+I had a simple goal: launch a technical blog with decent SEO control and predictable costs. As an engineer with AWS experience, my first instinct was to reach for what I knew—maybe an EC2 instance, or AWS Amplify. But then I looked at the billing calculator.
+
+Even for a simple blog, AWS has a way of surprising you. Bandwidth costs. Data transfer fees. The infamous "miscellaneous charges" line item. What starts as a $5/month t2.micro quickly becomes $30-50 when you factor in everything else. I needed something different.
+
+The old me would have stuck with AWS anyway. Learning a new platform meant hours of documentation, tutorial hell, and that nagging uncertainty of "am I doing this right?" But this time, I had a secret weapon: AI.
+
+## The Research Phase: Going Deeper Than Ever Before
+
+I started with a simple ChatGPT prompt: *"What are my options for hosting a Next.js blog with low, predictable costs?"*
+
+The answers came fast: Vercel, Netlify, Cloudflare Pages, GitHub Pages, DigitalOcean Droplet, AWS Amplify. Each had different trade-offs. Before AI, I'd probably skim two options, pick the familiar one, and move on. The friction of research would kill my bias for action.
+
+But with AI as my research partner, I went deeper. I asked follow-up questions about each platform:
+- "What are Vercel's bandwidth limits?"
+- "How does Cloudflare Pages handle dynamic routes?"
+- "What's the real cost of a DigitalOcean Droplet with moderate traffic?"
+
+Here's what fascinated me: **I encountered concepts I'd never heard of before**, and instead of bookmarking them for "later" (aka never), I immediately dove in. What's a reverse proxy? How does Docker handle networking? What's the difference between horizontal and vertical scaling in practice?
+
+After this deep dive, I chose **DigitalOcean Droplet at $6/month**. I understood the trade-offs clearly:
+- ✅ Fixed, predictable cost
+- ✅ Full control over the server
+- ⚠️ Need to learn Docker (hadn't touched it in 5-10 years)
+- ⚠️ Only vertical scaling without additional complexity
+
+The key insight: **AI doesn't just give you answers—it lowers the cost of asking questions**. So you can actually understand your requirements before making decisions.
+
+## The Deployment Journey: Building Mental Models on the Fly
+
+With my Next.js blog already built (that's another story about context engineering with Claude), I faced the main challenge: actually deploying this thing.
+
+### Step 1: Understanding Docker
+
+I opened a fresh ChatGPT session: *"I need to deploy a Next.js app to a DigitalOcean Droplet using Docker. I last used Docker 5 years ago. Start with the essentials."*
+
+The strategy here was crucial: **start small, build a mental model, then expand**. Instead of copying a full Dockerfile, I asked:
+- "What does each line in a typical Next.js Dockerfile do?"
+- "Why do we need a multi-stage build?"
+- "What's the difference between CMD and ENTRYPOINT?"
+
+Claude helped me generate this Dockerfile:
+
+```dockerfile
+# Build stage
+FROM node:18-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+# Production stage
+FROM node:18-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV production
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next/static ./.next/static
+
+EXPOSE 3000
+CMD ["node", "server.js"]
+```
+
+I actually understood what this did. The multi-stage build keeps the final image small. The standalone output is optimized for production. This wasn't just copy-paste—it was learning.
+
+### Step 2: Taming the Linux Terminal
+
+Setting up the Droplet meant SSH-ing into a Linux machine and running bash commands. Different OS, different shell, different package manager. Normally this would mean an hour of Googling "how to install docker on ubuntu."
+
+Instead, I asked: *"I'm SSH'd into an Ubuntu 22.04 Droplet. Walk me through setting up Docker, Git, and Caddy."*
+
+```bash
+# Update system
+sudo apt update && sudo apt upgrade -y
+
+# Install Docker
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+
+# Install Caddy
+sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+```
+
+Here's what I realized: **the terminal provides immediate feedback**. Commands either work (no red text) or fail (clear error message). I didn't need to understand every flag—if it ran successfully, I could move forward. This is actually better than some AI-generated code that compiles but behaves incorrectly.
+
+### Step 3: The Reverse Proxy Decision
+
+I needed HTTPS for my blog. The options: Nginx + Certbot or Caddy. Another ChatGPT session, another decision point.
+
+Caddy won for its simplicity. Check out this entire configuration:
+
+```caddy
+blog.yourdomain.com {
+    reverse_proxy localhost:3000
+}
+```
+
+That's it. Automatic HTTPS, automatic certificate renewal. Two lines. With Nginx, this would have been 20+ lines plus certificate management scripts.
+
+### Step 4: Going Live
+
+The final steps:
+1. Clone the repo: `git clone https://github.com/yourname/blog.git`
+2. Build the Docker image: `docker build -t blog .`
+3. Run it: `docker run -d -p 3000:3000 blog`
+4. Point my domain's DNS to the Droplet's IP
+5. Watch Caddy automatically provision the SSL certificate
+
+**Total time from zero Docker knowledge to live blog: about 2 hour.**
+
+## Three Lessons That Changed How I Think About Learning
+
+### Lesson 1: Recalibrate Your Capacity
+
+We're living in a new age. The question isn't "Can I learn this?" but "Do I want to learn this?" 
+
+Before AI, switching from AWS to DigitalOcean meant:
+- Hours reading documentation
+- Trial and error with unclear error messages
+- Fear of making expensive mistakes
+
+With AI:
+- Interactive learning tailored to your level
+- Immediate answers to "why" questions
+- Low-risk experimentation
+
+**Expand your frontier.** You can do more than you think.
+
+### Lesson 2: Curiosity Is Now Mandatory
+
+Here's the paradox: AI makes information cheaper, so you need to consume more of it intelligently.
+
+I did three separate deep-dive sessions during this project:
+1. Comparing hosting platforms (30 minutes)
+2. Understanding Docker best practices (20 minutes)
+3. Evaluating Nginx vs Caddy (15 minutes)
+
+Each session made me a better decision-maker. **AI isn't a shortcut around learning—it's a catalyst for deeper learning.**
+
+The key is verification. AI gives you answers quickly, but you need to:
+- Ask follow-up questions
+- Test assumptions
+- Understand trade-offs
+
+Don't just accept the first solution. Dig deeper.
+
+### Lesson 3: The New Paradigm of Programming
+
+Here's what I noticed: the terminal's feedback model is superior to modern programming in one crucial way—**clarity of results**.
+
+When I run a bash command:
+- Success = no red text, clear output
+- Failure = obvious error message
+
+When AI generates code:
+- Success = ??? (might compile but behave incorrectly)
+- Failure = might fail silently or in unexpected ways
+
+**The future of AI-assisted programming needs better harnesses:**
+- More comprehensive unit tests
+- Better error messages
+- More scripts and validation tools
+- Deterministic, testable components
+
+Think of it this way: make your software as reliable and observable as a well-designed CLI tool.
+
+## Final Thoughts
+
+A year ago, this blog post wouldn't exist. Not because Docker is hard, but because the activation energy to learn something new was too high. I would have stuck with AWS, paid the premium, and moved on.
+
+AI didn't make me smarter. It made the cost of learning negligible. And when learning is cheap, you can finally optimize for the right things: understanding your requirements, making informed decisions, and building exactly what you need.
+
+My $6/month blog is now live, I understand Docker deployments, and I have a mental model of reverse proxies that I actually earned. Not bad for an hour's work.
+
+What will you learn next?
+

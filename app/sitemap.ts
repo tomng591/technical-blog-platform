@@ -16,5 +16,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly',
       priority: 0.8,
     },
+    {
+      url: `${baseUrl}/blog/deploy-docker-with-ai`,
+      lastModified: new Date('2025-10-02'),
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
   ]
 }
